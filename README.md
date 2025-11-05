@@ -52,9 +52,9 @@ Example users:
 
 | Name | Username | Member Of | Password |
 |------|-----------|-----------|-----------|
-| Alex Admin | alex.admin | Domain Admins | ajfieH7943f |
-| Helpdesk Bob | bob.hd | Helpdesk_Team | groi984Hf9 |
-| Standard Sue | sue.user | Domain Users | jurnbf(&98e |
+| Alex Admin | alex.admin | Domain Admins | pass |
+| Helpdesk Bob | bob.hd | Helpdesk_Team | pass |
+| Standard Sue | sue.user | Domain Users | pass |
 
 To add users to groups:  
 Right-click the user → **Add to a group** → Type group name (e.g., *Administrators*, *Helpdesk_Team*) → OK  
@@ -76,9 +76,7 @@ Move `alex.admin` to the **LAB Admins** OU.
 - Name: `LAB Admins`  
 - Scope: Global  
 - Type: Security  
-- Add: `Alex Admin` and built-in Administrators group  
-
-📸 *Screenshot Example:* ADUC showing LAB Users and Groups  
+- Add: `Alex Admin` and add him to built-in Administrators group  
 
 ---
 
@@ -104,4 +102,151 @@ Move `alex.admin` to the **LAB Admins** OU.
 In **CMD**:  
 ```powershell
 ipconfig
+```
+You should see an IP in the 192.168.163.xxx range (from your DHCP scope).
+If yes, awesome — the DC issued the address.
+
+
+Then test ping to DC:
+```powershell
+ping 192.168.163.10
+```
+Then test DNS:
+```powershell
+ping lab.local
+```
+And:
+```powershell
+nslookup lab.local
+```
+You should see your Domain Controller return.
+If these work → your VM is talking to your AD network ✅
+
+---
+
+#### ✅ Step 3 — Rename the PC
+Settings → Rename (At Top)
+
+When it asks for PC name, set:
+```powershell
+WIN11-LAB01
+```
+(This is clean, enterprise-style naming.)
+
+Click Next → Restart later (we'll join domain next).
+
+---
+
+#### ✅ Step 4 — Join Domain
+After rename reboot:
+
+Follow these steps inside your Win11 VM:
+
+### 1️⃣ Open Network Settings
+Settings → Network & Internet → Ethernet (or Wi-Fi if using)
+Click Edit DNS assignment.
+
+### 2️⃣ Set DNS Manually
+Set:
+```powershell
+Preferred DNS: 192.168.163.10
+Alternate DNS: 8.8.8.8   (optional)
+```
+Click Save
+
+### 3️⃣ Flush DNS & verify
+Open PowerShell and run:
+```powershell
+ipconfig /flushdns
+ipconfig /release
+ipconfig /renew
+```
+Then retry:
+```powershell
+nslookup lab.local
+```
+Expected result:
+```powershell
+Server:  WIN-96HUEHD76S4.lab.local
+Address: 192.168.163.10
+Name:    lab.local
+```
+Next perform these steps:
+
+- Control Panel -> Search domain -> System (Join a Domain)
+- Select Change
+- Select Member of Domain and enter AD domain name
+- Enter:
+```powershel
+lab.local
+```
+- When prompted for creds:
+```powershell
+Username: LAB\Administrator
+Password: <your DC admin password>
+```
+If successful — you will see:
+```powershell
+Welcome to the LAB domain
+```
+Then Reboot.
+
+---
+
+#### ✅ Step 5 — Move Computer to OU
+Back on your Domain Controller:
+- Open Active Directory Users and Computers
+- Go to LAB Computers OU
+- If your WIN11-LAB01 machine is in Computers container,
+right-click it → Move → send it to LAB Computers
+
+#### 🎯 Success Check
+Log into Win11 with a domain account:
+On login screen:
+```powershell
+Other User →
+LAB\standard.user
+Password: *****
+```
+If it logs in → 🎉 domain join complete
+
+---
+
+#### 8️⃣ GPO — Baseline Domain Policy
+Create New GPO
+Tools → Open Group Policy Management
+Open Domains → drop down lab.local → Right click Group Policy Objects → New → Create GPO: LAB-Security-Baseline
+Right-click LAB-Security-Baseline → Edit and set:
+
+
+- Computer Configuration → Policies → Windows Settings → Security Settings → Account Policies → Password Policy
+ - Enforce history: 24
+ - Max age: 90 days
+ - Min age: 1 day
+ - Min length: 12
+ - Complexity: Enabled
+ - Reversible encryption: Disabled
+
+- Account Lockout Policy
+ - Threshold: 5
+ - Duration: 15 minutes
+ - Reset counter after: 15 minutes
+
+- Close editor.
+- Now link it to the domain:
+ - In the left tree, right-click lab.local (the domain, not “Domains”) → Link an Existing GPO…
+ - Pick LAB-Security-Baseline → OK.
+
+
+Force apply the GP on both your DC VM terminal and Windows 11 VM as alex.admin:
+```powershell
+gpupdate /force
+gpresult /r
+```
+You should see the Group policy was applied.
+
+---
+
+### 👨‍💻 Author
+Mario Tagaras | Cyber Security Specialist
 
