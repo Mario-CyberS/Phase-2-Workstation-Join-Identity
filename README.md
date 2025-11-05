@@ -219,7 +219,7 @@ Open Domains → drop down lab.local → Right click Group Policy Objects → Ne
 Right-click LAB-Security-Baseline → Edit and set:
 
 
-- Computer Configuration → Policies → Windows Settings → Security Settings → Account Policies → Password Policy
+1. Computer Configuration → Policies → Windows Settings → Security Settings → Account Policies → Password Policy
  - Enforce history: 24
  - Max age: 90 days
  - Min age: 1 day
@@ -227,13 +227,13 @@ Right-click LAB-Security-Baseline → Edit and set:
  - Complexity: Enabled
  - Reversible encryption: Disabled
 
-- Account Lockout Policy
+2. Account Lockout Policy
  - Threshold: 5
  - Duration: 15 minutes
  - Reset counter after: 15 minutes
 
-- Close editor.
-- Now link it to the domain:
+3. Close editor.
+4. Now link it to the domain:
  - In the left tree, right-click lab.local (the domain, not “Domains”) → Link an Existing GPO…
  - Pick LAB-Security-Baseline → OK.
 
