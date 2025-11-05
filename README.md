@@ -214,8 +214,11 @@ If it logs in → 🎉 domain join complete
 
 #### 8️⃣ GPO — Baseline Domain Policy
 Create New GPO
+
 Tools → Open Group Policy Management
+
 Open Domains → drop down lab.local → Right click Group Policy Objects → New → Create GPO: LAB-Security-Baseline
+
 Right-click LAB-Security-Baseline → Edit and set:
 
 
